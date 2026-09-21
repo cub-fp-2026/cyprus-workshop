@@ -140,9 +140,23 @@ section Classical
 
 variable {A B : Prop}
 
-theorem not_not_elim : ¬¬A → A := by sorry
+theorem not_not_elim : ¬¬A → A := by
+  -- ¬¬A = (A → False) → False
+  intro nna
+  cases Classical.em A
+  · assumption
+  · contradiction
 
-theorem not_and_iff : ¬(A ∧ B) ↔ ¬A ∨ ¬B := by sorry
+theorem not_and_iff : ¬(A ∧ B) ↔ ¬A ∨ ¬B := by
+  constructor
+  · intro not_a_and_b
+    cases Classical.em A
+    · right
+      intro b
+      apply_assumption
+      constructor <;> assumption
+    · left; assumption
+  · rintro (na | nb) ⟨a, b⟩ <;> contradiction
 
 theorem imp_iff_not_or : (A → B) ↔ ¬A ∨ B := by sorry
 
@@ -152,13 +166,41 @@ section Quantifiers
 
 variable {α : Type} {P Q : α → Prop}
 
-theorem forall_imp_of_forall (h : ∀ x, P x → Q x) (hp : ∀ x, P x) : ∀ x, Q x := by sorry
+theorem forall_imp_of_forall
+    (h : ∀ x, P x → Q x) (hp : ∀ x, P x)
+    : ∀ x, Q x := by
+  intro _
+  apply h
+  apply hp
+-- fun _ => h _ (hp _)
 
-theorem exists_of_forall (a : α) (h : ∀ x, P x) : ∃ x, P x := by sorry
+theorem exists_of_forall
+    (a : α) (h : ∀ x, P x)
+    : ∃ (x : α), P x := by
+  exists a
+  apply h
 
-theorem exists_or_iff : (∃ x, P x ∨ Q x) ↔ (∃ x, P x) ∨ (∃ x, Q x) := by sorry
+theorem exists_or_iff :
+    (∃ x, P x ∨ Q x) ↔ (∃ x, P x) ∨ (∃ x, Q x) := by
+  constructor
+  · rintro ⟨a, (hp | hq)⟩
+    · left
+      exact ⟨a, hp⟩
+    · right
+      exists a
+  · rintro (⟨a, hp⟩ | ⟨a, hq⟩)
+    · exists a
+      left
+      assumption
+    · exists a
+      right
+      assumption
 
-theorem not_forall_of_exists_not (h : ∃ x, ¬P x) : ¬∀ x, P x := by sorry
+theorem not_forall_of_exists_not (h : ∃ x, ¬P x) : ¬∀ x, P x := by
+  intro hp
+  obtain ⟨a, hnp⟩ := h
+  apply hnp
+  apply hp
 
 end Quantifiers
 

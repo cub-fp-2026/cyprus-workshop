@@ -1,5 +1,8 @@
 /-
 # Day 2 lecture: types, functions, and induction
+
+One running example: the natural numbers, the functions `double` and `half`,
+and the predicate `MyEven`, which picks out exactly the values of `double`.
 -/
 
 import Cyprus.Islanders
@@ -19,51 +22,15 @@ open Cyprus.Islanders
 
 section InductiveTypes
 
+-- ## A type with two constructors
+
 theorem flip_knight : Role.flip .knight = .knave := by sorry
 
 theorem flip_flip (r : Role) : r.flip.flip = r := by sorry
 
 theorem flip_ne_self (r : Role) : r.flip ≠ r := by sorry
 
-end InductiveTypes
-
-section Equality
-
-variable {α : Type}
-
-theorem eq_symm {x y : α} (h : x = y) : y = x := by sorry
-
-theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by sorry
-
-theorem congr_fun_arg {β : Type} (f : α → β) {x y : α} (h : x = y) : f x = f y := by sorry
-
-theorem role_chain (A B : Islander) (h : role A = role B) (hB : role B = .knight) :
-    role A = .knight := by
-  sorry
-
-end Equality
-
-section Functions
-
-variable {α β γ : Type}
-
-def Injective (f : α → β) : Prop := ∀ x y, f x = f y → x = y
-
-def Surjective (f : α → β) : Prop := ∀ y, ∃ x, f x = y
-
-theorem injective_id : Injective (fun x : α => x) := by sorry
-
-theorem flip_injective : Injective Role.flip := by sorry
-
-theorem flip_surjective : Surjective Role.flip := by sorry
-
-theorem injective_comp {f : α → β} {g : β → γ} (hf : Injective f) (hg : Injective g) :
-    Injective (fun x => g (f x)) := by
-  sorry
-
-end Functions
-
-section Induction
+-- ## A type with a recursive constructor
 
 inductive MyNat where
   | zero
@@ -84,15 +51,94 @@ theorem zero_add (n : MyNat) : add .zero n = n := by sorry
 
 end MyNat
 
+-- `Nat` has the same two constructors, and `+` recurses on the right just like `MyNat.add`.
+#print Nat
+
+example (n : Nat) : n + 0 = n := rfl
+
+example (n m : Nat) : n + (m + 1) = (n + m) + 1 := rfl
+
+end InductiveTypes
+
+section Equality
+
+variable {α β : Type}
+
+theorem eq_symm {x y : α} (h : x = y) : y = x := by sorry
+
+theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by sorry
+
+theorem congr_fun_arg (f : α → β) {x y : α} (h : x = y) : f x = f y := by sorry
+
+-- ## Equality of natural numbers: constructors are injective and distinct
+
+theorem succ_inj {n m : Nat} (h : n + 1 = m + 1) : n = m := by sorry
+
+theorem zero_ne_succ (n : Nat) : 0 ≠ n + 1 := by sorry
+
+end Equality
+
+section Functions
+
+variable {α β γ : Type}
+
 def double : Nat → Nat
   | 0 => 0
   | n + 1 => double n + 2
 
+def half : Nat → Nat
+  | 0 => 0
+  | 1 => 0
+  | n + 2 => half n + 1
+
+#eval double 5
+#eval half 7
+
 theorem double_eq_add_self (n : Nat) : double n = n + n := by sorry
 
-end Induction
+theorem half_double (n : Nat) : half (double n) = n := by sorry
+
+def Injective (f : α → β) : Prop := ∀ x y, f x = f y → x = y
+
+def Surjective (f : α → β) : Prop := ∀ y, ∃ x, f x = y
+
+theorem injective_id : Injective (fun x : α => x) := by sorry
+
+theorem succ_injective : Injective Nat.succ := by sorry
+
+/-- A function with a left inverse is injective. -/
+theorem injective_of_leftInverse {f : α → β} {g : β → α} (h : ∀ x, g (f x) = x) :
+    Injective f := by sorry
+
+theorem double_injective : Injective double := by sorry
+
+theorem half_surjective : Surjective half := by sorry
+
+theorem injective_comp {f : α → β} {g : β → γ} (hf : Injective f) (hg : Injective g) :
+    Injective (fun x => g (f x)) := by sorry
+
+end Functions
 
 section InductivePredicates
+
+-- ## A predicate on `Nat`
+
+inductive MyEven : Nat → Prop where
+  | zero : MyEven 0
+  | add_two {n : Nat} : MyEven n → MyEven (n + 2)
+
+example : MyEven 4 := by sorry
+
+theorem not_myEven_one : ¬MyEven 1 := by sorry
+
+theorem myEven_double (n : Nat) : MyEven (double n) := by sorry
+
+theorem exists_double_of_myEven {n : Nat} (h : MyEven n) : ∃ k, double k = n := by sorry
+
+/-- `MyEven` is exactly the image of `double`, and `1` is not in it. -/
+theorem double_not_surjective : ¬Surjective double := by sorry
+
+-- ## A relation on `Nat`
 
 inductive MyLe : Nat → Nat → Prop where
   | refl (n : Nat) : MyLe n n
@@ -104,37 +150,34 @@ theorem not_myLe_succ_zero (n : Nat) : ¬MyLe (n + 1) 0 := by sorry
 
 theorem myLe_trans {n m k : Nat} (hnm : MyLe n m) (hmk : MyLe m k) : MyLe n k := by sorry
 
-inductive MyEven : Nat → Prop where
-  | zero : MyEven 0
-  | add_two {n : Nat} : MyEven n → MyEven (n + 2)
-
-theorem even_two_mul (n : Nat) : MyEven (2 * n) := by sorry
-
 end InductivePredicates
 
 section Decidable
 
-inductive Parity (n : Nat) : Type where
-  | even (k : Nat) (h : n = 2 * k)
-  | odd (k : Nat) (h : n = 2 * k + 1)
+-- ## Deciding `MyEven` with a function
 
-def parity : (n : Nat) → Parity n
-  | 0 => .even 0 rfl
-  | n + 1 =>
-    match parity n with
-    | .even k h => .odd k (by omega)
-    | .odd k h => .even (k + 1) (by omega)
+def isEven : Nat → Bool
+  | 0 => true
+  | 1 => false
+  | n + 2 => isEven n
 
-def evenDecidable (n : Nat) : Decidable (MyEven n) := by sorry
+theorem isEven_sound : (n : Nat) → isEven n = true → MyEven n := by sorry
+
+theorem isEven_complete {n : Nat} (h : MyEven n) : isEven n = true := by sorry
+
+instance : DecidablePred MyEven := fun n =>
+  decidable_of_iff (isEven n = true) ⟨isEven_sound n, isEven_complete⟩
+
+example : MyEven 10 := by decide
+
+example : ¬MyEven 7 := by decide
 
 end Decidable
 
 section Collatz
 
 def collatzStep (n : Nat) : Nat :=
-  match parity n with
-  | .even k _ => k
-  | .odd _ _ => 3 * n + 1
+  if MyEven n then half n else 3 * n + 1
 
 inductive CollatzFinite : Nat → Prop where
   | zero : CollatzFinite 0

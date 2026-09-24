@@ -3,7 +3,7 @@
 This project is a two-day Lean workshop with lecture scaffolds and seminar practice.
 
 - Day 1 is logic. `Cyprus.Day1Lecture` covers the connectives, tactic mode, classical reasoning, quantifiers, and knights-and-knaves puzzles, with islanders as values and their roles as a two-valued type. `Cyprus.Day1Seminar` provides practice, ending with the puzzle collection.
-- Day 2 is types, functions, and induction. `Cyprus.Day2Lecture` covers inductive types, equality, injective and surjective functions, recursion and induction, inductive predicates, decidability, and optional Collatz. `Cyprus.Day2Seminar` provides practice.
+- Day 2 is types, functions, and induction, told through the natural numbers. `Cyprus.Day2Lecture` builds `MyNat` and compares it with `Nat`, covers equality and the Nat constructors, defines `double` and `half` by recursion to study injective and surjective functions, introduces the predicate `MyEven` as the image of `double` and the relation `MyLe`, decides `MyEven` with a Boolean function, and ends with optional Collatz. `Cyprus.Day2Seminar` provides practice.
 - `Cyprus.Islanders` is the support module for the puzzles. Do not modify it.
 
 ## Setup

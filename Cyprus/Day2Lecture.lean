@@ -9,6 +9,19 @@ import Mathlib.Tactic
 
 namespace Cyprus.Islanders.Role
 
+inductive MyBool where
+  | mytrue
+  | myfalse
+
+#print MyBool
+
+def mynegate : MyBool → MyBool := fun b =>
+  match b with
+  | .mytrue => .myfalse
+  | .myfalse => .mytrue
+
+#print Role
+
 def flip : Role → Role
   | .knight => .knave
   | .knave => .knight
@@ -21,11 +34,20 @@ open Cyprus.Islanders
 
 section Roles
 
-theorem flip_knight : Role.flip .knight = .knave := by sorry
+theorem flip_knight : Role.flip .knight = .knave := by
+  rewrite [Role.flip]
+  rfl
 
-theorem flip_flip (r : Role) : r.flip.flip = r := by sorry
+theorem flip_flip (r : Role) : r.flip.flip = r := by
+  cases r <;> rfl
 
-theorem flip_ne_self (r : Role) : r.flip ≠ r := by sorry
+theorem flip_ne_self (r : Role) : r.flip ≠ r := by
+  cases r
+  · rw [Role.flip]
+    trivial
+  · rw [Role.flip]
+    intro
+    contradiction
 
 end Roles
 
@@ -33,13 +55,29 @@ section Equality
 
 variable {α β : Type}
 
+inductive Eq (a : α) : α → Prop where
+  | rfl : Eq a a
+
 -- Equality: `rfl`, `rw`, and congruence.
 
-theorem eq_symm {x y : α} (h : x = y) : y = x := by sorry
+theorem eq_symm {x y : α} (h : x = y) : y = x := by
+  cases h
+  rfl
 
-theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by sorry
+theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by
+  rw [hxy, hyz]
 
-theorem congr_fun_arg (f : α → β) {x y : α} (h : x = y) : f x = f y := by sorry
+theorem congr_fun_arg (f : α → β) {x y : α} (h : x = y) : f x = f y := by
+  congr
+
+theorem congr_funfun_arg (f : α → α) {x y : α} (h : f x = f y) : f (f x) = f (f y) := by
+  rw [h]
+
+example {P : α → α → Prop} (h : ∀ a, P a a)
+    : ∀ a b, Eq a b → P a b := by
+  intro a b hab
+  cases hab
+  apply h
 
 end Equality
 
@@ -56,11 +94,18 @@ def add : MyNat → MyNat → MyNat
   | n, .zero => n
   | n, .succ m => .succ (add n m)
 
-theorem add_zero (n : MyNat) : add n .zero = n := by sorry
+theorem add_zero (n : MyNat) : add n .zero = n := by
+  rfl
 
-theorem add_succ (n m : MyNat) : add n (.succ m) = .succ (add n m) := by sorry
+-- n + (m + 1) = (n + m) + 1
+theorem add_succ (n m : MyNat) : add n (.succ m) = .succ (add n m) := by
+  rfl
 
-theorem zero_add (n : MyNat) : add .zero n = n := by sorry
+theorem zero_add (n : MyNat) : add .zero n = n := by
+  induction n
+  · rfl
+  · rewrite [add]
+    congr
 
 end MyNat
 
@@ -73,9 +118,12 @@ example (n m : Nat) : n + (m + 1) = (n + m) + 1 := rfl
 
 -- Constructors are injective and distinct.
 
-theorem succ_inj {n m : Nat} (h : n + 1 = m + 1) : n = m := by sorry
+theorem succ_inj {n m : Nat} (h : n + 1 = m + 1) : n = m := by
+  injection h
 
-theorem zero_ne_succ (n : Nat) : 0 ≠ n + 1 := by sorry
+theorem zero_ne_succ (n : Nat) : 0 ≠ n + 1 := by
+  intro
+  contradiction
 
 end InductiveTypes
 
@@ -95,9 +143,15 @@ def half : Nat → Nat
 #eval double 5
 #eval half 7
 
-theorem double_eq_add_self (n : Nat) : double n = n + n := by sorry
+theorem double_eq_add_self (n : Nat) : double n = n + n := by
+  induction n
+  case zero => rfl
+  case succ n' ih =>
+    rw [double, ih]
+    omega
 
-theorem half_double (n : Nat) : half (double n) = n := by sorry
+theorem half_double (n : Nat) : half (double n) = n := by
+  induction n <;> simp [double, half, *]
 
 def Injective (f : α → β) : Prop := ∀ x y, f x = f y → x = y
 

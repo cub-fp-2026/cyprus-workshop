@@ -157,14 +157,44 @@ def Injective (f : α → β) : Prop := ∀ x y, f x = f y → x = y
 
 def Surjective (f : α → β) : Prop := ∀ y, ∃ x, f x = y
 
-theorem injective_id : Injective (fun x : α => x) := by sorry
+theorem injective_id : Injective (fun x : α => x) := by
+  unfold Injective
+  intro x y h
+  cases h
+  rfl
 
-theorem succ_injective : Injective Nat.succ := by sorry
+theorem succ_injective : Injective Nat.succ := by
+  intro x y h
+  cases h
+  rfl
 
 theorem injective_of_leftInverse {f : α → β} {g : β → α} (h : ∀ x, g (f x) = x) :
-    Injective f := by sorry
+    Injective f := by
+  intro x y hxy
+  calc x = g (f x) := by symm; apply h
+       _ = g (f y) := by rw [hxy]
+       _ = y := by apply h
 
-theorem double_injective : Injective double := by sorry
+theorem double_injective : Injective double := by
+  intro n m hnm
+  induction n generalizing m
+  case zero =>
+    cases m
+    · rfl
+    · rw [double] at hnm
+      contradiction
+  case succ n' ih =>
+    cases m
+    case zero =>
+      repeat rw [double] at hnm
+      contradiction
+    case succ m' =>
+      repeat rw [double] at hnm
+      congr
+      apply ih
+      injection hnm
+      rename_i hnm'
+      injection hnm'
 
 theorem half_surjective : Surjective half := by sorry
 
@@ -179,17 +209,46 @@ inductive MyEven : Nat → Prop where
   | zero : MyEven 0
   | add_two {n : Nat} : MyEven n → MyEven (n + 2)
 
-example : MyEven 4 := by sorry
+inductive MyEven' : Nat → Prop where
+  | pf (k : Nat) {n : Nat} : 2 * k = n → MyEven' n
 
-theorem not_myEven_one : ¬MyEven 1 := by sorry
+example : MyEven 4 := by
+  repeat constructor
+
+example : MyEven' 4 := by
+  apply MyEven'.pf 2
+  rfl
+
+theorem one_not_even : ¬MyEven 1 := by
+  intro
+  contradiction
+
+example : ¬MyEven' 1 := by rintro ⟨(_ | _), h⟩ <;> simp at h
 
 -- Induct on the number.
-theorem myEven_double (n : Nat) : MyEven (double n) := by sorry
+theorem myEven_double (n : Nat) : MyEven (double n) := by
+  induction n <;> constructor
+  assumption
 
 -- Induct on the evidence of evenness.
-theorem exists_double_of_myEven {n : Nat} (h : MyEven n) : ∃ k, double k = n := by sorry
+theorem exists_double_of_myEven {n : Nat} (h : MyEven n) : ∃ k, double k = n := by
+  induction h
+  case zero =>
+    exists 0
+  case add_two n' h' ih =>
+    obtain ⟨k, ih⟩ := ih
+    exists k+1
+    rw [double, ih]
 
-theorem double_not_surjective : ¬Surjective double := by sorry
+theorem double_not_surjective : ¬Surjective double := by
+  unfold Surjective
+  intro h
+  obtain ⟨x, h'⟩ := h 1
+  have : MyEven 1 := by
+    rw [← h']
+    apply myEven_double
+  apply one_not_even
+  assumption
 
 -- An inductive relation.
 
@@ -197,11 +256,23 @@ inductive MyLe : Nat → Nat → Prop where
   | refl (n : Nat) : MyLe n n
   | step {n m : Nat} : MyLe n m → MyLe n (m + 1)
 
-example : MyLe 2 4 := by sorry
+example : MyLe 2 4 := by repeat constructor
 
-theorem not_myLe_succ_zero (n : Nat) : ¬MyLe (n + 1) 0 := by sorry
+theorem not_myLe_succ_zero (n : Nat) : ¬MyLe (n + 1) 0 := by
+  intro h
+  contradiction
 
-theorem myLe_trans {n m k : Nat} (hnm : MyLe n m) (hmk : MyLe m k) : MyLe n k := by sorry
+theorem myLe_trans {n m k : Nat} (hnm : MyLe n m) (hmk : MyLe m k) : MyLe n k := by
+  induction hmk
+  case refl => assumption
+  case step k' hmk' ih =>
+    constructor
+    assumption
+
+example {n m k : Nat} (hnm : MyLe n m) (hmk : MyLe m k) : MyLe n k := by
+  induction hnm generalizing k
+  case refl => assumption
+  case step m' hnm' ih => sorry -- painful
 
 end InductivePredicates
 
@@ -213,9 +284,20 @@ def isEven : Nat → Bool
   | n + 2 => isEven n
 
 -- Follow the recursion: 0, 1, and n + 2.
-theorem isEven_sound : (n : Nat) → isEven n = true → MyEven n := by sorry
+theorem isEven_sound : (n : Nat) → isEven n = true → MyEven n
+| 0, h => by constructor
+| 1, h => by contradiction
+| n + 2, h => by
+  constructor
+  apply isEven_sound n
+  rw [isEven] at h
+  assumption
 
-theorem isEven_complete {n : Nat} (h : MyEven n) : isEven n = true := by sorry
+theorem isEven_complete {n : Nat} (h : MyEven n) : isEven n = true := by
+  induction h
+  · rfl
+  · rw [isEven]
+    assumption
 
 -- Soundness and completeness turn the Boolean test into a decision procedure.
 instance : DecidablePred MyEven := fun n =>
@@ -229,6 +311,9 @@ end Decidable
 
 section Collatz
 
+macro "сорян" : tactic => `(tactic| sorry)
+macro "сорян" : term => `(sorry)
+
 def collatzStep (n : Nat) : Nat :=
   if MyEven n then half n else 3 * n + 1
 
@@ -238,6 +323,34 @@ inductive CollatzFinite : Nat → Prop where
   | step {n : Nat} : CollatzFinite (collatzStep n) → CollatzFinite n
 
 def CollatzConjecture : Prop := ∀ n, CollatzFinite n
+
+theorem half_le (n : Nat) : half n ≤ n := by
+  induction n using half.induct <;> simp [half]; omega
+
+theorem collatz : CollatzConjecture := by
+  unfold CollatzConjecture
+  intro n
+  -- Strong induction: assume every smaller number reaches 1.
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    match n with
+    | 0 => exact .zero
+    | 1 => exact .one
+    | n + 2 =>
+      apply CollatzFinite.step
+      by_cases h : MyEven (n + 2)
+      · -- Even: halving makes the number smaller, so the hypothesis applies.
+        rw [collatzStep, if_pos h]
+        apply ih
+        have := half_le n
+        rw [half]
+        omega
+      · -- Odd: 3n + 1 is bigger than n, so the hypothesis does not apply.
+        rw [collatzStep, if_neg h]
+        -- Take one more step: 3n + 1 is even, so halve it.
+        apply CollatzFinite.step
+        -- Still bigger than n + 2. Strong induction cannot close this case.
+        сорян
 
 end Collatz
 

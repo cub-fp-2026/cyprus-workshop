@@ -1,10 +1,8 @@
 /-
 # Day 2 seminar: types, functions, and induction
 
-Replace each `sorry` with a proof.  Sections follow the lecture, and within a
-section the exercises go from routine to harder.  The definitions come from
-`Cyprus.Day2Lecture`; do not redefine them.  The Collatz section is for anyone
-who finishes early.
+Fill the proofs using the lecture definitions. Stretch exercises and Collatz
+are optional.
 -/
 
 import Cyprus.Day1Lecture
@@ -31,7 +29,7 @@ open MyNat in
 theorem add_comm (n m : MyNat) : add n m = add m n :=
 sorry
 
-/-- The same proof as `MyNat.zero_add`, now for `Nat`.  Use `Nat.add_succ`, not `omega` or `simp`. -/
+-- Use induction and `Nat.add_succ`, not `omega` or `simp`.
 theorem nat_zero_add (n : Nat) : 0 + n = n :=
 sorry
 
@@ -44,6 +42,10 @@ variable {α β γ : Type}
 theorem surjective_id : Surjective (fun x : α => x) :=
 sorry
 
+theorem surjective_of_rightInverse {f : α → β} {g : β → α} (h : ∀ y, f (g y) = y) :
+    Surjective f :=
+sorry
+
 theorem flip_injective : Injective Role.flip :=
 sorry
 
@@ -53,7 +55,7 @@ sorry
 theorem half_double_add_one (n : Nat) : half (double n + 1) = n :=
 sorry
 
-/-- `half` has a left inverse, but it is not injective. -/
+-- A right inverse does not imply injectivity.
 theorem half_not_injective : ¬Injective half :=
 sorry
 
@@ -65,12 +67,7 @@ theorem injective_of_comp_injective (f : α → β) (g : β → γ)
     (h : Injective (fun x => g (f x))) : Injective f :=
 sorry
 
-/-- A function with a right inverse is surjective. -/
-theorem surjective_of_rightInverse {f : α → β} {g : β → α} (h : ∀ y, f (g y) = y) :
-    Surjective f :=
-sorry
-
-/-- Every function out of `Role` that is injective is also surjective. -/
+-- Stretch.
 theorem role_surjective_of_injective (f : Role → Role) (hf : Injective f) : Surjective f :=
 sorry
 
@@ -87,7 +84,7 @@ sorry
 theorem not_myEven_double_add_one (n : Nat) : ¬MyEven (double n + 1) :=
 sorry
 
-/-- Every number is either `double k` or `double k + 1`. -/
+-- Stretch.
 theorem double_or_double_add_one (n : Nat) : ∃ k, n = double k ∨ n = double k + 1 :=
 sorry
 
@@ -100,6 +97,7 @@ sorry
 theorem myLe_double (n : Nat) : MyLe n (double n) :=
 sorry
 
+-- Stretch.
 theorem myLe_iff_exists_add (n m : Nat) : MyLe n m ↔ ∃ k, n + k = m :=
 sorry
 
@@ -107,10 +105,10 @@ end InductivePredicates
 
 section Decidable
 
+-- Use induction.
 theorem isEven_double (n : Nat) : isEven (double n) = true :=
 sorry
 
-/-- A Boolean equality test on `Nat`. -/
 def isEq : Nat → Nat → Bool
   | 0, 0 => true
   | _ + 1, 0 => false
@@ -119,10 +117,11 @@ def isEq : Nat → Nat → Bool
 
 example : isEq 3 3 = true := rfl
 
-theorem isEq_sound (n m : Nat) : isEq n m = true → n = m :=
+theorem isEq_complete (n : Nat) : isEq n n = true :=
 sorry
 
-theorem isEq_complete (n : Nat) : isEq n n = true :=
+-- Stretch. Start with `induction n generalizing m`.
+theorem isEq_sound (n m : Nat) : isEq n m = true → n = m :=
 sorry
 
 end Decidable
@@ -132,7 +131,7 @@ section Collatz
 theorem collatzStep_double (n : Nat) : collatzStep (double n) = n :=
 sorry
 
-/-- Follow 6 down to 1 by hand. -/
+-- Follow 6 down to 1.
 theorem collatzFinite_six : CollatzFinite 6 :=
 sorry
 

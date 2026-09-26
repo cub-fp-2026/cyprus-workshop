@@ -1,8 +1,7 @@
 /-
 # Day 2 lecture: types, functions, and induction
 
-One running example: the natural numbers, the functions `double` and `half`,
-and the predicate `MyEven`, which picks out exactly the values of `double`.
+Running example: natural numbers, `double`, `half`, and `MyEven`.
 -/
 
 import Cyprus.Islanders
@@ -20,9 +19,7 @@ namespace Cyprus.Day2Lecture
 
 open Cyprus.Islanders
 
-section InductiveTypes
-
--- ## A type with two constructors
+section Roles
 
 theorem flip_knight : Role.flip .knight = .knave := by sorry
 
@@ -30,7 +27,23 @@ theorem flip_flip (r : Role) : r.flip.flip = r := by sorry
 
 theorem flip_ne_self (r : Role) : r.flip ≠ r := by sorry
 
--- ## A type with a recursive constructor
+end Roles
+
+section Equality
+
+variable {α β : Type}
+
+-- Equality: `rfl`, `rw`, and congruence.
+
+theorem eq_symm {x y : α} (h : x = y) : y = x := by sorry
+
+theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by sorry
+
+theorem congr_fun_arg (f : α → β) {x y : α} (h : x = y) : f x = f y := by sorry
+
+end Equality
+
+section InductiveTypes
 
 inductive MyNat where
   | zero
@@ -51,32 +64,20 @@ theorem zero_add (n : MyNat) : add .zero n = n := by sorry
 
 end MyNat
 
--- `Nat` has the same two constructors, and `+` recurses on the right just like `MyNat.add`.
+-- `Nat` has the same constructors; addition recurses on the right.
 #print Nat
 
 example (n : Nat) : n + 0 = n := rfl
 
 example (n m : Nat) : n + (m + 1) = (n + m) + 1 := rfl
 
-end InductiveTypes
-
-section Equality
-
-variable {α β : Type}
-
-theorem eq_symm {x y : α} (h : x = y) : y = x := by sorry
-
-theorem eq_trans {x y z : α} (hxy : x = y) (hyz : y = z) : x = z := by sorry
-
-theorem congr_fun_arg (f : α → β) {x y : α} (h : x = y) : f x = f y := by sorry
-
--- ## Equality of natural numbers: constructors are injective and distinct
+-- Constructors are injective and distinct.
 
 theorem succ_inj {n m : Nat} (h : n + 1 = m + 1) : n = m := by sorry
 
 theorem zero_ne_succ (n : Nat) : 0 ≠ n + 1 := by sorry
 
-end Equality
+end InductiveTypes
 
 section Functions
 
@@ -106,7 +107,6 @@ theorem injective_id : Injective (fun x : α => x) := by sorry
 
 theorem succ_injective : Injective Nat.succ := by sorry
 
-/-- A function with a left inverse is injective. -/
 theorem injective_of_leftInverse {f : α → β} {g : β → α} (h : ∀ x, g (f x) = x) :
     Injective f := by sorry
 
@@ -121,8 +121,6 @@ end Functions
 
 section InductivePredicates
 
--- ## A predicate on `Nat`
-
 inductive MyEven : Nat → Prop where
   | zero : MyEven 0
   | add_two {n : Nat} : MyEven n → MyEven (n + 2)
@@ -131,14 +129,15 @@ example : MyEven 4 := by sorry
 
 theorem not_myEven_one : ¬MyEven 1 := by sorry
 
+-- Induct on the number.
 theorem myEven_double (n : Nat) : MyEven (double n) := by sorry
 
+-- Induct on the evidence of evenness.
 theorem exists_double_of_myEven {n : Nat} (h : MyEven n) : ∃ k, double k = n := by sorry
 
-/-- `MyEven` is exactly the image of `double`, and `1` is not in it. -/
 theorem double_not_surjective : ¬Surjective double := by sorry
 
--- ## A relation on `Nat`
+-- An inductive relation.
 
 inductive MyLe : Nat → Nat → Prop where
   | refl (n : Nat) : MyLe n n
@@ -154,17 +153,17 @@ end InductivePredicates
 
 section Decidable
 
--- ## Deciding `MyEven` with a function
-
 def isEven : Nat → Bool
   | 0 => true
   | 1 => false
   | n + 2 => isEven n
 
+-- Follow the recursion: 0, 1, and n + 2.
 theorem isEven_sound : (n : Nat) → isEven n = true → MyEven n := by sorry
 
 theorem isEven_complete {n : Nat} (h : MyEven n) : isEven n = true := by sorry
 
+-- Soundness and completeness turn the Boolean test into a decision procedure.
 instance : DecidablePred MyEven := fun n =>
   decidable_of_iff (isEven n = true) ⟨isEven_sound n, isEven_complete⟩
 
